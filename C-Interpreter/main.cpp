@@ -44,7 +44,7 @@ int readfile()
 	std::string filename;
 
 	printf("please input a source file name: \n");
-	//std::cin >> filename;
+	std::cin >> filename;
 	filename = "test.cpp";
 
 
