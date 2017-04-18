@@ -45,7 +45,7 @@ int readfile()
 
 	printf("please input a source file name: \n");
 	std::cin >> filename;
-	filename = "test.cpp";
+	filename = "test.c";
 
 
 	if ((fp = fopen((char *)filename.data(), "rb")) == NULL)
@@ -80,12 +80,15 @@ int readfile()
 	return fSize;
 }
 
-void lexer()
+std::string lexer()
 {
 	char *last_pos;
 	int hash;
+	std::string cur_tk;
+
 	while (token = *src)
 	{
+		cur_tk = *src;
 		++src;
 		if (token == '\n')
 		{
@@ -104,6 +107,7 @@ void lexer()
 
 			while ((*src >= 'a'&&*src <= 'z') || (*src >= 'A'&&*src <= 'Z') || (*src >= '0'&&*src <= '9') || (*src == '_')) {
 				hash = hash * 147 + *src;
+				cur_tk += *src;
 				src++;
 			}
 
@@ -113,7 +117,7 @@ void lexer()
 				if (current_id[Hash] == hash && !memcmp((char *)current_id[Name], last_pos, src - last_pos)) {
 					// if found, return
 					token = current_id[Token];
-					return;
+					return cur_tk;
 				}
 				current_id = current_id + IdSize;
 			}
@@ -121,24 +125,27 @@ void lexer()
 			current_id[Name] = (int)last_pos;
 			current_id[Hash] = hash;
 			token = current_id[Token] = Id;
-			return;
+			return cur_tk;
 		}
 		else if (token >= '0'&&token <= '9') {
 			//handle a number
 			token_val = token - '0';
 			while (*src >= '0'&&*src <= '9')
 			{
+				cur_tk += *src;
 				token_val = token_val * 10 + *src++ - '0';
 			}
 			token = Num;
-			return;
+			return cur_tk;
 		}
 		else if (token == '"' || token == '\'') {
 			//handle string literal
 			last_pos = data;
 			while (*src != 0 && *src != token) {
+				cur_tk += *src;
 				token_val = *src++;
 				if (token_val == '\\') {
+					cur_tk += *src;
 					token_val = *src++;
 					if (token_val == 'n') {
 						token_val = '\n';
@@ -148,6 +155,7 @@ void lexer()
 					*data++ = token_val;
 				}
 			}
+			cur_tk += *src;
 			src++;
 			//if it is a single character, return Num token
 			if (token == '"') {
@@ -156,7 +164,7 @@ void lexer()
 			else {
 				token = Num;
 			}
-			return;
+			return cur_tk;
 		}
 		else if (token == '/') {
 			if (*src == '/') {
@@ -168,120 +176,130 @@ void lexer()
 			else {
 				// not a comment but a divide operator
 				token = Div;
-				return;
+				return cur_tk;
 			}
 		}
 		else if (token == '=') {
 			if (*src == '=') {
+				cur_tk += *src;
 				src++;
 				token = Eq;
 			}
 			else {
 				token = Assign;
 			}
-			return;
+			return cur_tk;
 		}
 		else if (token == '+') {
 			if (*src == '+') {
+				cur_tk += *src;
 				src++;
 				token = Inc;
 			}
 			else {
 				token = Add;
 			}
-			return;
+			return cur_tk;
 		}
 		else if (token == '-') {
 			if (*src == '-') {
+				cur_tk += *src;
 				src++;
 				token = Dec;
 			}
 			else {
 				token = Sub;
 			}
-			return;
+			return cur_tk;
 		}
 		else if (token == '!') {
 			if (*src == '=') {
+				cur_tk += *src;
 				src++;
 				token = Ne;
 			}
-			return;
+			return cur_tk;
 		}
 		else if (token == '<') {
 			if (*src == '=') {
+				cur_tk += *src;
 				src++;
 				token = Le;
 			}
 			else if (*src == '<') {
+				cur_tk += *src;
 				src++;
 				token = Shl;
 			}
 			else {
 				token = Lt;
 			}
-			return;
+			return cur_tk;
 		}
 		else if (token == '>') {
 			if (*src == '=') {
+				cur_tk += *src;
 				src++;
 				token = Ge;
 			}
 			else if (*src == '>') {
+				cur_tk += *src;
 				src++;
 				token = Shr;
 			}
 			else {
 				token = Gt;
 			}
-			return;
+			return cur_tk;
 		}
 		else if (token == '|') {
 			if (*src == '|') {
+				cur_tk += *src;
 				src++;
 				token = Lor;
 			}
 			else {
 				token = Or;
 			}
-			return;
+			return cur_tk;
 		}
 		else if (token == '&') {
 			if (*src == '&') {
+				cur_tk += *src;
 				src++;
 				token = Lan;
 			}
 			else {
 				token = And;
 			}
-			return;
+			return cur_tk;
 		}
 		else if (token == '^') {
 			token = Xor;
-			return;
+			return cur_tk;
 		}
 		else if (token == '%') {
 			token = Mod;
-			return;
+			return cur_tk;
 		}
 		else if (token == '*') {
 			token = Mul;
-			return;
+			return cur_tk;
 		}
 		else if (token == '[') {
 			token = Brak;
-			return;
+			return cur_tk;
 		}
 		else if (token == '?') {
 			token = Cond;
-			return;
+			return cur_tk;
 		}
 		else if (token == '~' || token == ';' || token == '{' || token == '}' || token == '(' || token == ')' || token == ']' || token == ',' || token == ':') {
 			// directly return the character as token;
-			return;
+			return cur_tk;
 		}
 	}
-	return;
+	return cur_tk;
 }
 
 void expr(int level) {
@@ -289,10 +307,12 @@ void expr(int level) {
 }
 
 void program() {
-	lexer(); // get next token
+
+	std::string cur_tk;
+	cur_tk = lexer();		// get next token
 	while (token > 0) {
-		printf("The token is: %3d(%c)\n", token, (char)token);
-		lexer();
+		std::cout << "The token is:" << token << " " << cur_tk << std::endl;
+		cur_tk = lexer();
 	}
 }
 
