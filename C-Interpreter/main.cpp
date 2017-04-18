@@ -54,6 +54,7 @@ int readfile()
 		system("pause");
 		return -1;
 	}
+
 	fseek(fp, 0, SEEK_END);
 	fSize = ftell(fp);
 	rewind(fp);
