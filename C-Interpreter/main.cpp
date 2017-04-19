@@ -84,11 +84,11 @@ std::string lexer()
 {
 	char *last_pos;
 	int hash;
-	std::string cur_tk;
+	std::string tk_str;
 
 	while (token = *src)
 	{
-		cur_tk = *src;
+		tk_str = *src;
 		++src;
 		if (token == '\n')
 		{
@@ -107,7 +107,7 @@ std::string lexer()
 
 			while ((*src >= 'a'&&*src <= 'z') || (*src >= 'A'&&*src <= 'Z') || (*src >= '0'&&*src <= '9') || (*src == '_')) {
 				hash = hash * 147 + *src;
-				cur_tk += *src;
+				tk_str += *src;
 				src++;
 			}
 
@@ -117,7 +117,7 @@ std::string lexer()
 				if (current_id[Hash] == hash && !memcmp((char *)current_id[Name], last_pos, src - last_pos)) {
 					// if found, return
 					token = current_id[Token];
-					return cur_tk;
+					return tk_str;
 				}
 				current_id = current_id + IdSize;
 			}
@@ -125,27 +125,27 @@ std::string lexer()
 			current_id[Name] = (int)last_pos;
 			current_id[Hash] = hash;
 			token = current_id[Token] = Id;
-			return cur_tk;
+			return tk_str;
 		}
 		else if (token >= '0'&&token <= '9') {
 			//handle a number
 			token_val = token - '0';
 			while (*src >= '0'&&*src <= '9')
 			{
-				cur_tk += *src;
+				tk_str += *src;
 				token_val = token_val * 10 + *src++ - '0';
 			}
 			token = Num;
-			return cur_tk;
+			return tk_str;
 		}
 		else if (token == '"' || token == '\'') {
 			//handle string literal
 			last_pos = data;
 			while (*src != 0 && *src != token) {
-				cur_tk += *src;
+				tk_str += *src;
 				token_val = *src++;
 				if (token_val == '\\') {
-					cur_tk += *src;
+					tk_str += *src;
 					token_val = *src++;
 					if (token_val == 'n') {
 						token_val = '\n';
@@ -155,7 +155,7 @@ std::string lexer()
 					*data++ = token_val;
 				}
 			}
-			cur_tk += *src;
+			tk_str += *src;
 			src++;
 			//if it is a single character, return Num token
 			if (token == '"') {
@@ -164,7 +164,7 @@ std::string lexer()
 			else {
 				token = Num;
 			}
-			return cur_tk;
+			return tk_str;
 		}
 		else if (token == '/') {
 			if (*src == '/') {
@@ -176,130 +176,130 @@ std::string lexer()
 			else {
 				// not a comment but a divide operator
 				token = Div;
-				return cur_tk;
+				return tk_str;
 			}
 		}
 		else if (token == '=') {
 			if (*src == '=') {
-				cur_tk += *src;
+				tk_str += *src;
 				src++;
 				token = Eq;
 			}
 			else {
 				token = Assign;
 			}
-			return cur_tk;
+			return tk_str;
 		}
 		else if (token == '+') {
 			if (*src == '+') {
-				cur_tk += *src;
+				tk_str += *src;
 				src++;
 				token = Inc;
 			}
 			else {
 				token = Add;
 			}
-			return cur_tk;
+			return tk_str;
 		}
 		else if (token == '-') {
 			if (*src == '-') {
-				cur_tk += *src;
+				tk_str += *src;
 				src++;
 				token = Dec;
 			}
 			else {
 				token = Sub;
 			}
-			return cur_tk;
+			return tk_str;
 		}
 		else if (token == '!') {
 			if (*src == '=') {
-				cur_tk += *src;
+				tk_str += *src;
 				src++;
 				token = Ne;
 			}
-			return cur_tk;
+			return tk_str;
 		}
 		else if (token == '<') {
 			if (*src == '=') {
-				cur_tk += *src;
+				tk_str += *src;
 				src++;
 				token = Le;
 			}
 			else if (*src == '<') {
-				cur_tk += *src;
+				tk_str += *src;
 				src++;
 				token = Shl;
 			}
 			else {
 				token = Lt;
 			}
-			return cur_tk;
+			return tk_str;
 		}
 		else if (token == '>') {
 			if (*src == '=') {
-				cur_tk += *src;
+				tk_str += *src;
 				src++;
 				token = Ge;
 			}
 			else if (*src == '>') {
-				cur_tk += *src;
+				tk_str += *src;
 				src++;
 				token = Shr;
 			}
 			else {
 				token = Gt;
 			}
-			return cur_tk;
+			return tk_str;
 		}
 		else if (token == '|') {
 			if (*src == '|') {
-				cur_tk += *src;
+				tk_str += *src;
 				src++;
 				token = Lor;
 			}
 			else {
 				token = Or;
 			}
-			return cur_tk;
+			return tk_str;
 		}
 		else if (token == '&') {
 			if (*src == '&') {
-				cur_tk += *src;
+				tk_str += *src;
 				src++;
 				token = Lan;
 			}
 			else {
 				token = And;
 			}
-			return cur_tk;
+			return tk_str;
 		}
 		else if (token == '^') {
 			token = Xor;
-			return cur_tk;
+			return tk_str;
 		}
 		else if (token == '%') {
 			token = Mod;
-			return cur_tk;
+			return tk_str;
 		}
 		else if (token == '*') {
 			token = Mul;
-			return cur_tk;
+			return tk_str;
 		}
 		else if (token == '[') {
 			token = Brak;
-			return cur_tk;
+			return tk_str;
 		}
 		else if (token == '?') {
 			token = Cond;
-			return cur_tk;
+			return tk_str;
 		}
 		else if (token == '~' || token == ';' || token == '{' || token == '}' || token == '(' || token == ')' || token == ']' || token == ',' || token == ':') {
 			// directly return the character as token;
-			return cur_tk;
+			return tk_str;
 		}
 	}
-	return cur_tk;
+	return tk_str;
 }
 
 void expr(int level) {
@@ -308,11 +308,11 @@ void expr(int level) {
 
 void program() {
 
-	std::string cur_tk;
-	cur_tk = lexer();		// get next token
+	std::string tk_str;
+	tk_str = lexer();		// get next token
 	while (token > 0) {
-		std::cout << "The token is:" << token << " " << cur_tk << std::endl;
-		cur_tk = lexer();
+		std::cout << "The token is:" << token << " " << tk_str << std::endl;
+		tk_str = lexer();
 	}
 }
 
@@ -326,6 +326,11 @@ int main()
 	int i;
 	line = 1;
 	poolsize = 256 * 1024;
+
+	if (!(data = (char*)malloc(poolsize))) {
+		printf("could not malloc(%d) for data area\n", poolsize);
+		return -1;
+	}
 
 	if (!(symbols =(int*)malloc(poolsize))) {
 		printf("could not malloc(%d) for symbol table\n", poolsize);
