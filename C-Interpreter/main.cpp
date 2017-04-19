@@ -327,6 +327,11 @@ int main()
 	line = 1;
 	poolsize = 256 * 1024;
 
+	if (!(data = (char*)malloc(poolsize))) {
+		printf("could not malloc(%d) for data area\n", poolsize);
+		return -1;
+	}
+
 	if (!(symbols =(int*)malloc(poolsize))) {
 		printf("could not malloc(%d) for symbol table\n", poolsize);
 		return -1;
