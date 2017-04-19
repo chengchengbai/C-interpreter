@@ -80,6 +80,7 @@ int preprocess()
 	}
 
 	if (!(data =(char*)malloc(poolsize))) {
+
 		printf("could not malloc(%d) for data area\n", poolsize);
 		return -1;
 	}
