@@ -7,6 +7,9 @@ int token;					//token number
 int poolsize;
 int line;					//current line number
 
+int *text,                    // text segment
+*old_text,                // for dump text segment
+*stack;                   // stack
 char *data;                   // data segment
 
 int token_val;                // value of current token (mainly for number)
@@ -59,23 +62,6 @@ int readfile()
 	return fSize;
 }
 
-
-void expr(int level) 
-{
-	// do nothing
-}
-
-void program() 
-{
-
-	std::string tk_str;
-	tk_str = get_token();		// get next token
-	while (token > 0) {
-		std::cout << "The token is:" << token << " " << tk_str << std::endl;
-		tk_str = get_token();
-	}
-}
-
 void eval()
 {
 	//virtual machine to interpret or execute code
@@ -88,6 +74,11 @@ int preprocess()
 	int i;
 	poolsize = 256 * 1024;
 
+	if (!(text = old_text =(int*)malloc(poolsize))) {
+		printf("could not malloc(%d) for text area\n", poolsize);
+		return -1;
+	}
+
 	if (!(data =(char*)malloc(poolsize))) {
 		printf("could not malloc(%d) for data area\n", poolsize);
 		return -1;
@@ -97,6 +88,7 @@ int preprocess()
 		printf("could not malloc(%d) for symbol table\n", poolsize);
 		return -1;
 	}
+	memset(data, 0, poolsize);
 	memset(symbols, 0, poolsize);
 
 	src = "char else enum if int return sizeof while "

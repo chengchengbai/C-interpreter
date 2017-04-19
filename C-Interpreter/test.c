@@ -2,6 +2,10 @@
 int a;
 int b;
 int c;
+
+enum test{A,B,C};
+enum {D=1,E,F};
+
 int main()
 {
 	char *s = "ahdoahfo";
