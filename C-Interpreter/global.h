@@ -34,8 +34,11 @@ int preprocess();
 
 std::string get_token();
 
-void expr(int level);
+void expression(int level);
 void program();
 void global_declaration();
 void enum_declaration();
 void function_declaration();
+void function_parameter();
+void function_body();
+void statement();

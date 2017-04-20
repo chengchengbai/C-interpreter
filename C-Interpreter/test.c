@@ -3,21 +3,20 @@ int a;
 int b;
 int c;
 
+//char *s = "asb";
+
 enum test{A,B,C};
 enum {D=1,E,F};
 
-int main()
+int main(int d, char ch)
 {
-	char *s = "ahdoahfo";
-	a = b + c;
-	
-	return 0;
+	char *s,cc;
+	int gh;
+	char hg;
 }
 
 void translation_unit()
 {
-	while(token != TK_EOF)
-	{
-		external_declaration(SC_GLOBAL);
-	}
+	int a,b,c;
+	char **dd;
 }
