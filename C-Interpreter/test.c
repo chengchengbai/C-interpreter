@@ -2,6 +2,10 @@
 int a;
 int b;
 int c;
+
+enum test{A,B,C};
+enum {D=1,E,F};
+
 int main()
 {
 	a = b + c;
@@ -9,7 +13,8 @@ int main()
 }
 void func(int a, char c)
 {
-	char *d;
+	char *d="abbfb";
+	char ch = 'c';
 	int b;
 	b = a++;
 	
