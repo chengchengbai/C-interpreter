@@ -8,11 +8,15 @@ enum {D=1,E,F};
 
 int main()
 {
+	char *s = "ahdoahfo";
 	a = b + c;
+	
 	return 0;
 }
-void func(int a, char c)
+
+void translation_unit()
 {
+
 	char *d="abbfb";
 	char ch = 'c';
 	int b;
@@ -22,4 +26,9 @@ void func(int a, char c)
         hash = hash * 147 + *src;
 		src++;
     }
+
+	while(token != TK_EOF)
+	{
+		external_declaration(SC_GLOBAL);
+	}
 }
