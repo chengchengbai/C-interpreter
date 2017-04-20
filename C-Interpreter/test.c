@@ -20,4 +20,10 @@ void translation_unit()
 	{
 		external_declaration(SC_GLOBAL);
 	}
+	if(a==b){
+		return 1;
+	}
+	else{
+		c = a;
+	}
 }
