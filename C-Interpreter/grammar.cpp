@@ -17,21 +17,19 @@
 extern int token;
 extern int line;
 extern int *current_id;
+extern int *symbols;
 extern int *text;
 extern char *data;
 extern int token_val;
 
 int basetype;    // the type of a declaration, make it global for convenience
 int expr_type;   // the type of an expression
+int index_of_bp; // index of bp pointer on stack
 
 void program()
-{
-//	std::string tk_str;
-	//tk_str = get_token();		// get next token
-	std::cout << get_token() << std::endl;
+{	
+	std::cout << get_token() << std::endl;		// get next token
 	while (token > 0) {
-		//std::cout << "The token is:" << token << " " << tk_str << std::endl;
-		//tk_str = get_token();
 		global_declaration();
 	}
 }
@@ -47,7 +45,7 @@ void match(int tk) {
 	}
 }
 
-void expr(int level)
+void expression(int level)
 {
 	// do nothing
 }
@@ -168,5 +166,240 @@ void enum_declaration()
 
 void function_declaration()
 {
+	// type func_name (...) {...}
+	// parse parameter list and main body: (...) {...}
 
+	match('(');
+	function_parameter();
+	match(')');
+	match('{');
+	function_body();
+
+	// look for symbol table and save the local var imformation
+	current_id = symbols;
+	while (current_id[Token])
+	{
+		if (current_id[Class] == Loc) {
+			current_id[Class] = current_id[BClass];
+			current_id[Type] = current_id[BType];
+			current_id[Value] = current_id[BValue];
+		}
+		current_id = current_id + IdSize;
+	}
+}
+
+void function_parameter()
+{
+	// parameter_decl ::= type {'*'} id {',' type {'*'} id}
+	int type;
+	int params = 0;
+	while (token!=')')
+	{
+		type = INT;
+		if (token == Int) {
+			match(Int);
+		}
+		else if (token == Char) {
+			type = CHAR;
+			match(Char);
+		}
+
+		while (token == Mul) {
+			//maybe multiple pointer type such as char **a
+			match(Mul);
+			type = type + PTR;
+		}
+		if (token != Id) {
+			//invalid variable name
+			std::cout << "A bad parameter declaration! at line: " << line << std::endl;
+			system("pause");
+			exit(-1);
+		}
+		if (current_id[Class] == Loc) {
+			// if parameters name are already existed
+			std::cout << "Duplicate declaration! at line: " << line << std::endl;
+			system("pause");
+			exit(-1);
+		}
+		
+		match(Id);
+		// save local variable information
+		current_id[BClass] = current_id[Class]; current_id[Class] = Loc;
+		current_id[BType] = current_id[Type]; current_id[Type] = type;
+		current_id[BValue] = current_id[Value]; current_id[Value] = params++;
+
+		if (token == ','){
+			match(',');
+		}
+	}
+	// fix the location of bp pointer as some parameters are sent to the stack after that processing
+	index_of_bp = params + 1;
+}
+
+void function_body()
+{
+	// type func_name (...) {...}
+
+	// parse the main body of a function which is in the brace:
+	// ... {
+	// 1. local declarations
+	// 2. statements
+	// }
+
+	int pos_local; // position of local variables on the stack.
+	int type;
+	pos_local = index_of_bp;
+
+	while (token == Int || token == Char) {
+		basetype = (token == Int) ? INT : CHAR;
+		match(token);
+
+		while (token != ';')
+		{
+			type = basetype;
+
+			while (token == Mul)
+			{
+				match(Mul);
+				type = type + PTR;
+			}
+
+			if (token != Id) {
+				std::cout << "A bad local declaration! at line: " << line << std::endl;
+				system("pause");
+				exit(-1);
+			}
+			if (current_id[Class] == Loc) {
+				// if parameters name are already existed
+				std::cout << "Duplicate local declaration! at line: " << line << std::endl;
+				system("pause");
+				exit(-1);
+			}
+
+			match(Id);
+			// save local variable information
+			current_id[BClass] = current_id[Class]; current_id[Class] = Loc;
+			current_id[BType] = current_id[Type]; current_id[Type] = type;
+			current_id[BValue] = current_id[Value]; current_id[Value] = ++pos_local;
+
+			if (token == ',') {
+				match(',');
+			}
+		}
+		match(';');
+	}
+
+	//save stack size for local variables
+	*++text = ENT;
+	*++text = pos_local - index_of_bp;
+
+	//start to parse statements
+	while (token != '}'){
+		statement();
+	}
+
+	//emit code for leaving sub function
+	*++text = LEV;
+}
+
+void statement()
+{
+	// there are 6 kinds of statements here:
+	// 1. if (...) <statement> [else <statement>]
+	// 2. while (...) <statement>
+	// 3. { <statement> }
+	// 4. return xxx;
+	// 5. <empty statement>;
+	// 6. expression; (expression end with semicolon)
+
+	int *a, *b;
+
+	if (token == If) {
+		// if (...) <statement> [else <statement>]
+		//
+		//   if (...)           <cond>
+		//                      JZ a
+		//     <statement>      <statement>
+		//   else:              JMP b
+		// a:                 a:
+		//     <statement>      <statement>
+		// b:                 b:
+		//
+
+		match(If);
+		match('(');
+		expression(Assign);
+		match(')');
+
+		*++text = JZ;
+		b = ++text;
+
+		statement();
+		if (token == Else) {
+			match(Else);
+
+			// emit code for JMP B
+			*b = (int)(text + 3);
+			*++text = JMP;
+			b = ++text;
+
+			statement();
+		}
+		*b = (int)(text + 1);
+	}
+	else if (token == While) {
+		// a:                     a:
+		//    while (<cond>)        <cond>
+		//                          JZ b
+		//     <statement>          <statement>
+		//                          JMP a
+		// b:                     b:
+
+		match(While);
+		a = text + 1;
+
+		match('(');
+		expression(Assign);
+		match(')');
+
+		*++text = JZ;
+		b = ++text;
+
+		statement();
+
+		*++text = JMP;
+		*++text = (int)a;
+		*b = (int)(text + 1);
+
+	}
+	else if (token == '{') {
+		// { <statement> ... }
+
+		match('{');
+		while (token != '}')
+		{
+			statement();
+		}
+		match('}');
+	}
+	else if (token == Return) {
+		// return [expression];
+
+		match(Return);
+		if (token != ';') {
+			expression(Assign);
+		}
+		match(';');
+
+		//emit code for return
+		*++text = LEV;
+	}
+	else if (token == ';') {
+		//empty statement
+		match(';');
+	}
+	else {
+		expression(Assign);
+		match(';');
+	}
 }
