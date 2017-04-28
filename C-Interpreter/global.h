@@ -29,8 +29,10 @@ enum { CHAR, INT, PTR };
 
 
 // here gose the function declarations
+int readfile_arg(int argc, char *argv[]);
 int readfile();
 int preprocess();
+int eval();
 
 std::string get_token();
 
