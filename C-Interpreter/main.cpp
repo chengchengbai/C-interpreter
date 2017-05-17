@@ -55,7 +55,6 @@ int readfile()
 	}
 	src[i + 1] = 0;
 
-	//printf("%s\n", src);		
 	std::cout << src << std::endl;		//printf will cause some issues on display so use 'cout' instead
 
 	system("pause");
